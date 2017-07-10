@@ -1,4 +1,5 @@
 import os
+import json
 import glob
 import gensim
 import itertools
@@ -54,35 +55,34 @@ class MyCorpus(object):
                 yield self.dictionary.doc2bow(content.lower().split())
 
 
-def ldamodel(dir_pattern):
+def ldamodel(dir_pattern, num_tops=3):
+    f = open("low_tfidf.txt", "w")
     text_iter = IterDocs(dir_pattern)
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = corpora.Dictionary(line for line in text_iter)
 
     # convert tokenized documents into a document-term matrix
-    # corpus = [dictionary.doc2bow(text) for text in texts]
     corpus = MyCorpus(dir_pattern, dictionary)
 
     # initialize a tfidf transformation
     tfidf = models.TfidfModel(corpus)
-    #print list(tfidf[corpus])
 
     # filter low tf-idf
     threshold = 0.05
-    high_value_words = []
+    low_value_words = []
     for bow in corpus:
-        high_value_words += [id for id, value in tfidf[bow] if value >= threshold]
+        low_value_words += [id for id, value in tfidf[bow] if value < threshold]
         # output words w/ low tf-idf
         # TODO: filter out and collect stopwords
-        print [dictionary[id] for id, value in tfidf[bow] if value < threshold]
-
-    dictionary.filter_tokens(good_ids=high_value_words)
+        json.dump([(id, dictionary[id], value) for id, value in tfidf[bow] if value < threshold], f)
+    f.close()
+    dictionary.filter_tokens(low_value_words)
+    dictionary.compactify()
     new_corpus = MyCorpus(dir_pattern, dictionary)
-    # new_corpus = [dictionary.doc2bow(text) for text in texts]
 
     # generate LDA model
-    # ldamodel = gensim.models.ldamodel.LdaModel(list(tfidf[corpus]), num_topics=3, id2word = dictionary, passes=20)
-    ldamodel = gensim.models.ldamodel.LdaModel(new_corpus, num_topics=3, id2word = dictionary, passes=20)
+    # ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_tops, id2word=dictionary, passes=20)
+    ldamodel = gensim.models.ldamodel.LdaModel(new_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
     return dictionary, ldamodel
     # return dictionary, texts, ldamodel
 
@@ -113,7 +113,7 @@ def visualize(res):
 
 if __name__ == "__main__":
     # dictionary, texts, LDAMODEL = ldamodel("*.txt")
-    dictionary, LDAMODEL = ldamodel("*.txt")
+    dictionary, LDAMODEL = ldamodel("*.txt", 2)
     # doc_lda = LDAMODEL[dictionary.doc2bow(texts[3])]
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
