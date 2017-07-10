@@ -72,6 +72,9 @@ def ldamodel(dir_pattern):
     high_value_words = []
     for bow in corpus:
         high_value_words += [id for id, value in tfidf[bow] if value >= threshold]
+        # output words w/ low tf-idf
+        # TODO: filter out and collect stopwords
+        print [dictionary[id] for id, value in tfidf[bow] if value < threshold]
 
     dictionary.filter_tokens(good_ids=high_value_words)
     new_corpus = MyCorpus(dir_pattern, dictionary)
