@@ -1,8 +1,9 @@
 import os
+# remove_chars = len(os.linesep)
 import json
 import glob
 import gensim
-import itertools
+import time
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import enchant
@@ -12,6 +13,9 @@ from nltk.stem.porter import PorterStemmer
 from gensim import corpora, models
 from nltk.stem.wordnet import WordNetLemmatizer
 
+cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+if not os.path.exists(cur_time):
+    os.makedirs(cur_time)
 
 def process_doc(doc):
     tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
@@ -56,7 +60,8 @@ class MyCorpus(object):
 
 
 def ldamodel(dir_pattern, num_tops=3):
-    f = open("low_tfidf.txt", "w")
+    f = open(cur_time + "/low_tfidf.txt", "w")
+    f2 = open(cur_time + "/low_tfidf_dict.txt", "w")
     text_iter = IterDocs(dir_pattern)
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = corpora.Dictionary(line for line in text_iter)
@@ -69,13 +74,30 @@ def ldamodel(dir_pattern, num_tops=3):
 
     # filter low tf-idf
     threshold = 0.05
-    low_value_words = []
+    # low_value_words = []
+    low_value_words = set()
+    f.write('[')
     for bow in corpus:
-        low_value_words += [id for id, value in tfidf[bow] if value < threshold]
+        # low_value_words += [id for id, value in tfidf[bow] if value < threshold]
+        json_list = []
+        for id, value in tfidf[bow]:
+            if value < threshold:
+                low_value_words.add(id)
+                json_list.append((dictionary[id], value))
         # output words w/ low tf-idf
         # TODO: filter out and collect stopwords
-        json.dump([(id, dictionary[id], value) for id, value in tfidf[bow] if value < threshold], f)
+        json.dump(json_list, f)
+        # json.dump([(dictionary[id], value) for id, value in tfidf[bow] if value < threshold], f)
+        f.write(',')
+    f.seek(-1, os.SEEK_END)
+    f.truncate()
+    f.write(']')
     f.close()
+    low_value_list = [dictionary[id] for id in low_value_words]
+    low_value_list.sort()
+    for item in low_value_list:
+        f2.write("%s\n" % item)
+    f2.close()
     dictionary.filter_tokens(low_value_words)
     dictionary.compactify()
     new_corpus = MyCorpus(dir_pattern, dictionary)
@@ -104,17 +126,20 @@ def format_result(dist):
 
 
 def visualize(res):
+    count = 1
     for topic in res:
         # Generate a word cloud image
         text = ' '.join(res[topic])
         wordcloud = WordCloud(collocations=False).generate(text)
-        image = wordcloud.to_image()
-        image.show()
+        filename = './' + cur_time + '/' + str(count) + '.png'
+        wordcloud.to_file(filename)
+        count += 1
+        # image = wordcloud.to_image()
+        # image.show()
 
 if __name__ == "__main__":
-    # dictionary, texts, LDAMODEL = ldamodel("*.txt")
-    dictionary, LDAMODEL = ldamodel("*.txt", 2)
-    # doc_lda = LDAMODEL[dictionary.doc2bow(texts[3])]
+    # dictionary, LDAMODEL = ldamodel("*.txt", 3)
+    dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
     print final_res
