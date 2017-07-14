@@ -67,7 +67,8 @@ def ldamodel():
 
     # generate LDA model
     # ldamodel = gensim.models.ldamodel.LdaModel(list(tfidf[corpus]), num_topics=3, id2word = dictionary, passes=20)
-    ldamodel = gensim.models.ldamodel.LdaModel(new_corpus, num_topics=3, id2word = dictionary, passes=20)
+    # ldamodel = gensim.models.ldamodel.LdaModel(new_corpus, num_topics=3, id2word = dictionary, passes=20)
+    ldamodel = gensim.models.HdpModel(new_corpus, dictionary)
     return dictionary, texts, ldamodel
 
 
@@ -78,8 +79,10 @@ def format_result(dist):
         words = words.split(' + ')
         res[topic] = list()
         for tp in words:
-            prob, word = tp.split('*"')
-            word = word.rstrip('"')
+            prob, word = tp.split('*')
+            # HDP output format
+            # prob, word = tp.split('*"')
+            # word = word.rstrip('"')
             length = len(prob.split('.')[1])
             for count in range(int(float(prob) * pow(10, length))):
                 res[topic].append(word)
