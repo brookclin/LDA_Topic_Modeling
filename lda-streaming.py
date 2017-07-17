@@ -11,11 +11,13 @@ from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 from nltk.stem.porter import PorterStemmer
 from gensim import corpora, models
+from gensim.utils import lemmatize
 from nltk.stem.wordnet import WordNetLemmatizer
 
 cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 if not os.path.exists(cur_time):
     os.makedirs(cur_time)
+
 
 def process_doc(doc):
     tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
@@ -63,8 +65,14 @@ def ldamodel(dir_pattern, num_tops=3):
     f = open(cur_time + "/low_tfidf.txt", "w")
     f2 = open(cur_time + "/low_tfidf_dict.txt", "w")
     text_iter = IterDocs(dir_pattern)
+
+    bigram = gensim.models.Phrases(text_iter)
+    # bigram = gensim.models.Phrases(text_iter, min_count=1, threshold=2)
     # turn our tokenized documents into a id <-> term dictionary
-    dictionary = corpora.Dictionary(line for line in text_iter)
+    dictionary = corpora.Dictionary(bigram[line] for line in text_iter)
+    print [bigram[line] for line in text_iter]
+
+    # dictionary = corpora.Dictionary(line for line in text_iter)
 
     # convert tokenized documents into a document-term matrix
     corpus = MyCorpus(dir_pattern, dictionary)
@@ -138,8 +146,8 @@ def visualize(res):
         # image.show()
 
 if __name__ == "__main__":
-    # dictionary, LDAMODEL = ldamodel("*.txt", 3)
-    dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
+    dictionary, LDAMODEL = ldamodel("*.txt", 3)
+    # dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
     print final_res
