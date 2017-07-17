@@ -7,6 +7,7 @@ import time
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import enchant
+import pandas as pd
 from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 from nltk.stem.porter import PorterStemmer
@@ -17,6 +18,17 @@ cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 if not os.path.exists(cur_time):
     os.makedirs(cur_time)
 
+
+# from StackOverflow
+def topic_prob_extractor(gensim_hdp):
+    shown_topics = gensim_hdp.show_topics(num_topics=-1, formatted=False)
+    topics_nos = [x[0] for x in shown_topics]
+    weights = [sum([item[1] for item in shown_topics[topicN][1]]) for topicN in topics_nos]
+    data_frame = pd.DataFrame({'topic_id' : topics_nos, 'weight' : weights})
+    data_frame = data_frame.sort(columns=["weight"], ascending=False)
+    return data_frame
+
+
 def process_doc(doc):
     tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
 
@@ -24,6 +36,7 @@ def process_doc(doc):
     en_stop = get_stop_words('en')
 
     # lemmtizer
+    # TODO: change with gensim's lemmatizer
     lmtzr = WordNetLemmatizer()
 
     raw = doc.decode('utf-8').lower()
@@ -147,7 +160,9 @@ def visualize(res):
 if __name__ == "__main__":
     # dictionary, LDAMODEL = ldamodel("*.txt", 3)
     dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
+    print LDAMODEL.print_topics()
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
     print final_res
     visualize(final_res)
+    # print topic_prob_extractor(LDAMODEL)
