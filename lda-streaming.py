@@ -1,5 +1,6 @@
 import os
 # remove_chars = len(os.linesep)
+import re
 import json
 import glob
 import gensim
@@ -33,7 +34,11 @@ def process_doc(doc):
     dict_en = enchant.Dict("en_US")
 
     stopped_tokens = [token for token in tokens if token not in en_stop]
-    stemmed_tokens = [lmtzr.lemmatize(i) for i in stopped_tokens]
+    # stemmed_tokens = [lmtzr.lemmatize(i) for i in stopped_tokens]
+    stemmed_tokens = [word.split('/')[0]
+                      for word in lemmatize(' '.join(stopped_tokens),
+                                            allowed_tags=re.compile('(NN)'),
+                                            min_length=3)]
     words_tokens = [word for word in stemmed_tokens if dict_en.check(word)]
     return words_tokens
 
@@ -66,13 +71,12 @@ def ldamodel(dir_pattern, num_tops=3):
     f2 = open(cur_time + "/low_tfidf_dict.txt", "w")
     text_iter = IterDocs(dir_pattern)
 
-    bigram = gensim.models.Phrases(text_iter)
+    # bigram = gensim.models.Phrases(text_iter)
     # bigram = gensim.models.Phrases(text_iter, min_count=1, threshold=2)
     # turn our tokenized documents into a id <-> term dictionary
-    dictionary = corpora.Dictionary(bigram[line] for line in text_iter)
-    print [bigram[line] for line in text_iter]
+    # dictionary = corpora.Dictionary(bigram[line] for line in text_iter)
 
-    # dictionary = corpora.Dictionary(line for line in text_iter)
+    dictionary = corpora.Dictionary(line for line in text_iter)
 
     # convert tokenized documents into a document-term matrix
     corpus = MyCorpus(dir_pattern, dictionary)
@@ -146,8 +150,8 @@ def visualize(res):
         # image.show()
 
 if __name__ == "__main__":
-    dictionary, LDAMODEL = ldamodel("*.txt", 3)
-    # dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
+    # dictionary, LDAMODEL = ldamodel("*.txt", 3)
+    dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
     print final_res
