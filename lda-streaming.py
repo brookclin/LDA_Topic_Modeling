@@ -114,11 +114,13 @@ def ldamodel(dir_pattern, num_tops=3):
     dictionary.filter_tokens(low_value_words)
     dictionary.compactify()
     new_corpus = MyCorpus(dir_pattern, dictionary)
+    corpora.MmCorpus.serialize(cur_time + '/SerializedCorpus.mm', new_corpus)
+    serialize_corpus = corpora.MmCorpus(cur_time + '/SerializedCorpus.mm')
 
     # generate LDA model
     # ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_tops, id2word=dictionary, passes=20)
-    ldamodel = gensim.models.ldamodel.LdaModel(new_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
-    return new_corpus, dictionary, ldamodel
+    ldamodel = gensim.models.ldamodel.LdaModel(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
+    return serialize_corpus, dictionary, ldamodel
     # return dictionary, texts, ldamodel
 
 
@@ -152,7 +154,6 @@ def visualize(res):
 
 if __name__ == "__main__":
     corpus, dictionary, LDAMODEL = ldamodel("*.txt", 3)
-    pyLDAvis.gensim.prepare(LDAMODEL, corpus, dictionary)
     # corpus, dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
