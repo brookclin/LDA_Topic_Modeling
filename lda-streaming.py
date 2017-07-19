@@ -120,7 +120,14 @@ def ldamodel(dir_pattern, num_tops=3):
     # generate LDA model
     # ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_tops, id2word=dictionary, passes=20)
     ldamodel = gensim.models.ldamodel.LdaModel(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
-    return serialize_corpus, dictionary, ldamodel
+
+    # coherence
+    old_dictionary = corpora.Dictionary(line for line in text_iter)
+    # cm = gensim.models.CoherenceModel(model=ldamodel, corpus=serialize_corpus, texts=text_iter,
+    #                                   dictionary=old_dictionary, coherence='c_v')
+    # print cm.get_coherence()
+
+    return serialize_corpus, old_dictionary, ldamodel, text_iter
     # return dictionary, texts, ldamodel
 
 
@@ -152,10 +159,47 @@ def visualize(res):
         # image = wordcloud.to_image()
         # image.show()
 
+
+def evaluate_graph(dictionary, corpus, texts, limit):
+    """
+    Function to display num_topics - LDA graph using c_v coherence
+
+    Parameters:
+    ----------
+    dictionary : Gensim dictionary
+    corpus : Gensim corpus
+    limit : topic limit
+
+    Returns:
+    -------
+    lm_list : List of LDA topic models
+    c_v : Coherence values corresponding to the LDA model with respective number of topics
+    """
+    c_v = []
+    lm_list = []
+    # for num_topics in range(1, limit):
+    for num_topics in limit:
+        lm = gensim.models.LdaModel(corpus=corpus, num_topics=num_topics, id2word=dictionary)
+        lm_list.append(lm)
+        cm = gensim.models.CoherenceModel(model=lm, texts=texts, dictionary=dictionary, coherence='c_v')
+        c_v.append(cm.get_coherence())
+
+    # Show graph
+    # x = range(1, limit)
+    x = limit
+    plt.plot(x, c_v)
+    plt.xlabel("num_topics")
+    plt.ylabel("Coherence score")
+    plt.legend(("c_v"), loc='best')
+    plt.show()
+
+    return lm_list, c_v
+
 if __name__ == "__main__":
-    corpus, dictionary, LDAMODEL = ldamodel("*.txt", 3)
-    # corpus, dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
+    # corpus, dictionary, LDAMODEL, text = ldamodel("*.txt", 3)
+    corpus, dictionary, LDAMODEL, text = ldamodel("../pdfextractor/results/*.txt", 10)
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
     print final_res
     visualize(final_res)
+    evaluate_graph(dictionary, corpus, text, [10, 20])
