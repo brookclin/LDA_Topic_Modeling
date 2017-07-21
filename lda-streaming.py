@@ -1,7 +1,5 @@
 import os
-# remove_chars = len(os.linesep)
 import re
-import json
 import glob
 import gensim
 import time
@@ -10,10 +8,8 @@ import matplotlib.pyplot as plt
 import enchant
 from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
-from nltk.stem.porter import PorterStemmer
 from gensim import corpora, models
 from gensim.utils import lemmatize
-from nltk.stem.wordnet import WordNetLemmatizer
 
 cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 path = './experiment/' + cur_time
@@ -32,7 +28,7 @@ def process_doc(doc):
 
     raw = doc.decode('utf-8').lower()
     tokens = tokenizer.tokenize(raw)
-    # dict_en = enchant.Dict("en_US")
+    dict_en = enchant.Dict("en_US")
 
     stopped_tokens = [token for token in tokens if token not in en_stop]
     # stemmed_tokens = [lmtzr.lemmatize(i) for i in stopped_tokens]
@@ -40,9 +36,8 @@ def process_doc(doc):
                       for word in lemmatize(' '.join(stopped_tokens),
                                             allowed_tags=re.compile('(NN)'),
                                             min_length=3)]
-    # words_tokens = [word for word in stemmed_tokens if dict_en.check(word)]
-    # return words_tokens
-    return stemmed_tokens
+    words_tokens = [word for word in stemmed_tokens if dict_en.check(word)]
+    return words_tokens
 
 
 class IterDocs(object):
@@ -69,14 +64,9 @@ class MyCorpus(object):
 
 
 def ldamodel(dir_pattern, num_tops=3):
-    # f = open(path + "/low_tfidf.txt", "w")
-    # f2 = open(path + "/low_tfidf_dict.txt", "w")
     text_iter = IterDocs(dir_pattern)
 
-    # bigram = gensim.models.Phrases(text_iter)
     # turn our tokenized documents into a id <-> term dictionary
-    # dictionary = corpora.Dictionary(bigram[line] for line in text_iter)
-
     dictionary = corpora.Dictionary(line for line in text_iter)
 
     # convert tokenized documents into a document-term matrix
@@ -89,27 +79,11 @@ def ldamodel(dir_pattern, num_tops=3):
     threshold = 0.05
     # low_value_words = []
     low_value_words = set()
-    # f.write('[')
     for bow in corpus:
         # low_value_words += [id for id, value in tfidf[bow] if value < threshold]
-        # json_list = []
         for id, value in tfidf[bow]:
             if value < threshold:
                 low_value_words.add(id)
-                # json_list.append((dictionary[id], value))
-        # output words w/ low tf-idf
-        # json.dump(json_list, f)
-        # json.dump([(dictionary[id], value) for id, value in tfidf[bow] if value < threshold], f)
-        # f.write(',')
-    # f.seek(-1, os.SEEK_END)
-    # f.truncate()
-    # f.write(']')
-    # f.close()
-    # low_value_list = [dictionary[id] for id in low_value_words]
-    # low_value_list.sort()
-    # for item in low_value_list:
-    #     f2.write("%s\n" % item)
-    # f2.close()
     dictionary.filter_tokens(low_value_words)
     dictionary.compactify()
     new_corpus = MyCorpus(dir_pattern, dictionary)
@@ -120,16 +94,7 @@ def ldamodel(dir_pattern, num_tops=3):
     # ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_tops, id2word=dictionary, passes=20)
     # ldamodel = gensim.models.ldamodel.LdaModel(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
     ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20, workers=3)
-
-    # coherence
-    # old_dictionary = corpora.Dictionary(line for line in text_iter)
-    # cm = gensim.models.CoherenceModel(model=ldamodel, corpus=serialize_corpus, texts=text_iter,
-    #                                   dictionary=old_dictionary, coherence='c_v')
-    # print cm.get_coherence()
-    # evaluate_graph(old_dictionary, serialize_corpus, text_iter, [3, 10])
-
     return serialize_corpus, dictionary, ldamodel, text_iter
-    # return dictionary, texts, ldamodel
 
 
 def format_result(dist):
@@ -204,5 +169,3 @@ if __name__ == "__main__":
     final_res = format_result(dist)
     print final_res
     visualize(final_res)
-    # need to put in lda function, using old dict
-    # evaluate_graph(dictionary, corpus, text, [10, 20])
