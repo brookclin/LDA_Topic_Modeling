@@ -12,7 +12,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 
 def get_docs():
     doc_list = []
-    for file in glob.glob("*.txt"):
+    for file in glob.glob("sample/*.txt"):
         with open(file,'r') as ofile:
             content = ofile.read()
             doc_list.append(content)

@@ -1,6 +1,7 @@
 import os
 # remove_chars = len(os.linesep)
 import json
+import re
 import glob
 import gensim
 import time
@@ -12,11 +13,13 @@ from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 from nltk.stem.porter import PorterStemmer
 from gensim import corpora, models
+from gensim.utils import lemmatize
 from nltk.stem.wordnet import WordNetLemmatizer
 
 cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-if not os.path.exists(cur_time):
-    os.makedirs(cur_time)
+path = './experiment/' + cur_time
+if not os.path.exists(path):
+    os.makedirs(path)
 
 
 # from StackOverflow
@@ -26,7 +29,7 @@ def topic_prob_extractor(gensim_hdp):
     weights = [sum([item[1] for item in shown_topics[topicN][1]]) for topicN in topics_nos]
     data_frame = pd.DataFrame({'topic_id' : topics_nos, 'weight' : weights})
     data_frame = data_frame.sort(columns=["weight"], ascending=False)
-    return data_frame
+    return data_frame[:20]
 
 
 def process_doc(doc):
@@ -36,7 +39,6 @@ def process_doc(doc):
     en_stop = get_stop_words('en')
 
     # lemmtizer
-    # TODO: change with gensim's lemmatizer
     lmtzr = WordNetLemmatizer()
 
     raw = doc.decode('utf-8').lower()
@@ -44,7 +46,11 @@ def process_doc(doc):
     dict_en = enchant.Dict("en_US")
 
     stopped_tokens = [token for token in tokens if token not in en_stop]
-    stemmed_tokens = [lmtzr.lemmatize(i) for i in stopped_tokens]
+    # stemmed_tokens = [lmtzr.lemmatize(i) for i in stopped_tokens]
+    stemmed_tokens = [word.split('/')[0]
+                      for word in lemmatize(' '.join(stopped_tokens),
+                                            allowed_tags=re.compile('(NN)'),
+                                            min_length=3)]
     words_tokens = [word for word in stemmed_tokens if dict_en.check(word)]
     return words_tokens
 
@@ -72,9 +78,9 @@ class MyCorpus(object):
                 yield self.dictionary.doc2bow(content.lower().split())
 
 
-def ldamodel(dir_pattern, num_tops=3):
-    f = open(cur_time + "/low_tfidf.txt", "w")
-    f2 = open(cur_time + "/low_tfidf_dict.txt", "w")
+def ldamodel(dir_pattern):
+    f = open(path + "/low_tfidf.txt", "w")
+    f2 = open(path + "/low_tfidf_dict.txt", "w")
     text_iter = IterDocs(dir_pattern)
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = corpora.Dictionary(line for line in text_iter)
@@ -120,11 +126,11 @@ def ldamodel(dir_pattern, num_tops=3):
     # ldamodel = gensim.models.ldamodel.LdaModel(new_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
 
     # Serialize & HDA
-    corpora.MmCorpus.serialize(cur_time+'/SerializedCorpus.mm', corpus)
-    serialize_corpus = corpora.MmCorpus(cur_time+'/SerializedCorpus.mm')
+    corpora.MmCorpus.serialize(path+'/SerializedCorpus.mm', corpus)
+    serialize_corpus = corpora.MmCorpus(path+'/SerializedCorpus.mm')
     ldamodel = gensim.models.HdpModel(serialize_corpus, dictionary)
     # ldamodel = gensim.models.HdpModel(corpus, dictionary)
-    return dictionary, ldamodel
+    return serialize_corpus, dictionary, ldamodel
     # return dictionary, texts, ldamodel
 
 
@@ -151,18 +157,18 @@ def visualize(res):
         # Generate a word cloud image
         text = ' '.join(res[topic])
         wordcloud = WordCloud(collocations=False).generate(text)
-        filename = './' + cur_time + '/' + str(count) + '.png'
+        filename = path + '/' + str(count) + '.png'
         wordcloud.to_file(filename)
         count += 1
         # image = wordcloud.to_image()
         # image.show()
 
 if __name__ == "__main__":
-    # dictionary, LDAMODEL = ldamodel("*.txt", 3)
-    dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt", 10)
-    print LDAMODEL.print_topics()
+    # corpus, dictionary, LDAMODEL = ldamodel("sample/*.txt")
+    corpus, dictionary, LDAMODEL = ldamodel("../pdfextractor/results/*.txt")
+    # print LDAMODEL.print_topics()
     dist = LDAMODEL.show_topics()
     final_res = format_result(dist)
-    print final_res
+    # print final_res
     visualize(final_res)
-    # print topic_prob_extractor(LDAMODEL)
+    print topic_prob_extractor(LDAMODEL)
