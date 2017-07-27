@@ -3,6 +3,7 @@ import re
 import glob
 import gensim
 import time
+import logging
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import enchant
@@ -10,6 +11,9 @@ from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 from gensim import corpora, models
 from gensim.utils import lemmatize
+
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+logging.root.level = logging.INFO # ipython sometimes messes up the logging setup; restore
 
 cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 path = './experiment/' + cur_time
@@ -86,14 +90,18 @@ def ldamodel(dir_pattern, num_tops=3):
                 low_value_words.add(id)
     dictionary.filter_tokens(low_value_words)
     dictionary.compactify()
+    dictionary.save(path+"/dictionary")
     new_corpus = MyCorpus(dir_pattern, dictionary)
     corpora.MmCorpus.serialize(path + '/SerializedCorpus.mm', new_corpus)
     serialize_corpus = corpora.MmCorpus(path + '/SerializedCorpus.mm')
+    serialize_dict = corpora.Dictionary.load(path+"/dictionary")
 
     # generate LDA model
     # ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_tops, id2word=dictionary, passes=20)
     # ldamodel = gensim.models.ldamodel.LdaModel(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20)
-    ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20, workers=3)
+
+    # ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20, workers=3)
+    ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=serialize_dict, passes=20, workers=3)
     return serialize_corpus, dictionary, ldamodel, text_iter
 
 
@@ -163,9 +171,13 @@ def evaluate_graph(dictionary, corpus, texts, limit):
     return lm_list, c_v
 
 if __name__ == "__main__":
-    # corpus, dictionary, LDAMODEL, text = ldamodel("sample/*.txt", 1)
-    corpus, dictionary, LDAMODEL, text = ldamodel("../pdfextractor/results/*.txt", 10)
-    dist = LDAMODEL.show_topics()
+    num_topics = 3
+    corpus, dictionary, LDAMODEL, text = ldamodel("sample/*.txt", num_topics)
+    # corpus, dictionary, LDAMODEL, text = ldamodel("../pdfextractor/results/*.txt", num_topics)
+    dist = LDAMODEL.show_topics(num_topics)
+    f = open(path+'/topics.txt', 'w')
+    f.write(str(dist))
+    f.close()
     final_res = format_result(dist)
-    print final_res
+    # print final_res
     visualize(final_res)
