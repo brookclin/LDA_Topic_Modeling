@@ -102,6 +102,8 @@ def ldamodel(dir_pattern, num_tops=3):
 
     # ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20, workers=3)
     ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=serialize_dict, passes=20, workers=3)
+    for bow in corpus:
+        print ldamodel.get_document_topics(bow)
     return serialize_corpus, dictionary, ldamodel, text_iter
 
 
