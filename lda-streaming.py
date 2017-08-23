@@ -7,6 +7,7 @@ import logging
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import enchant
+import pandas as pd
 from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 from gensim import corpora, models
@@ -37,9 +38,11 @@ def process_doc(doc):
     stopped_tokens = [token for token in tokens if token not in en_stop]
     # stemmed_tokens = [lmtzr.lemmatize(i) for i in stopped_tokens]
     stemmed_tokens = [word.split('/')[0]
-                      for word in lemmatize(' '.join(stopped_tokens),
-                                            allowed_tags=re.compile('(NN)'),
-                                            min_length=3)]
+                      for word in lemmatize(' '.join(stopped_tokens))]
+    # stemmed_tokens = [word.split('/')[0]
+    #                   for word in lemmatize(' '.join(stopped_tokens),
+    #                                         allowed_tags=re.compile('(NN)'),
+    #                                         min_length=3)]
     words_tokens = [word for word in stemmed_tokens if dict_en.check(word)]
     return words_tokens
 
@@ -69,6 +72,8 @@ class MyCorpus(object):
 
 def ldamodel(dir_pattern, num_tops=3):
     text_iter = IterDocs(dir_pattern)
+    # column of file names for csv
+    fnames = [filename.split('/')[-1] for filename in glob.glob(dir_pattern)]
 
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = corpora.Dictionary(line for line in text_iter)
@@ -102,8 +107,20 @@ def ldamodel(dir_pattern, num_tops=3):
 
     # ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20, workers=3)
     ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=serialize_dict, passes=20, workers=3)
+
+    # doc-topics distribution to csv
+    doc_topics_weights = []
+    idx = 0
     for bow in corpus:
-        print ldamodel.get_document_topics(bow)
+        row = ldamodel.get_document_topics(bow)
+        for tup in row:
+            new_tup = [fnames[idx]] + list(tup)
+            doc_topics_weights.append(new_tup)
+        idx += 1
+    df = pd.DataFrame(doc_topics_weights)
+    df = df.pivot(index=0, columns=1, values=2)
+    df.to_csv(path + "/doc_topics.csv")
+
     return serialize_corpus, dictionary, ldamodel, text_iter
 
 
