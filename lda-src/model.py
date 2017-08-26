@@ -1,5 +1,9 @@
+import glob
+import gensim
+import pandas as pd
 from gensim import corpora, models
 from iter_class import IterDocs, MyCorpus
+from output import doc_topic_distribution
 
 
 def ldamodel(dir_pattern, path, num_tops=3):
@@ -40,17 +44,6 @@ def ldamodel(dir_pattern, path, num_tops=3):
     # ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=dictionary, passes=20, workers=3)
     ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=serialize_dict, passes=20, workers=3)
 
-    # doc-topics distribution to csv
-    doc_topics_weights = []
-    idx = 0
-    for bow in corpus:
-        row = ldamodel.get_document_topics(bow)
-        for tup in row:
-            new_tup = [fnames[idx]] + list(tup)
-            doc_topics_weights.append(new_tup)
-        idx += 1
-    df = pd.DataFrame(doc_topics_weights)
-    df = df.pivot(index=0, columns=1, values=2)
-    df.to_csv(path + "/doc_topics.csv")
+    doc_topic_distribution(corpus, ldamodel, dir_pattern, path)
 
     return serialize_corpus, dictionary, ldamodel, text_iter

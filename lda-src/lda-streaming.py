@@ -7,9 +7,8 @@ import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 from gensim import corpora, models
-import ldamodel
-import format_result
-import visualize
+from model import ldamodel
+from output import *
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 logging.root.level = logging.INFO # ipython sometimes messes up the logging setup; restore
