@@ -1,5 +1,5 @@
 import glob
-from process_doc import *
+from preprocess import process_doc
 
 
 class IterDocs(object):

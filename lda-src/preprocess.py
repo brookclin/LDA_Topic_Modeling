@@ -3,8 +3,26 @@ import enchant
 from gensim.utils import lemmatize
 from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
+from gensim import corpora, models
+
+from iter_class import *
 
 
+def serialization(input_path):
+    text_iter = IterDocs(input_path)
+
+    # turn our tokenized documents into a id <-> term dictionary
+    dictionary = corpora.Dictionary(line for line in text_iter)
+
+    # convert tokenized documents into a document-term matrix
+    corpus = MyCorpus(input_path, dictionary)
+
+    # initialize a tfidf transformation
+    tfidf = models.TfidfModel(corpus)
+    # TODO: serialize original corpus, dict and tfidf model
+
+
+# Process every single doc in iterator
 def process_doc(doc):
     tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
 

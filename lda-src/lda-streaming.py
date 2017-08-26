@@ -6,7 +6,6 @@ import logging
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from gensim import corpora, models
 from model import ldamodel
 from output import *
 
