@@ -4,6 +4,7 @@ from gensim.utils import lemmatize
 from nltk.tokenize import RegexpTokenizer
 from stop_words import get_stop_words
 
+
 def process_doc(doc):
     tokenizer = RegexpTokenizer(r'[a-zA-Z]+')
 
