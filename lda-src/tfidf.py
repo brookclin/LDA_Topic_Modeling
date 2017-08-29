@@ -3,8 +3,10 @@ from gensim import corpora
 
 
 def low_tfidf_terms(output_path, threshold=0.05):
-    # TODO: create a function to set threshold then output word lists, to compare with output files
-    # TODO: list words with low tf-idf value
+    """
+    A function to set threshold then output word lists, to compare with output files
+    To list words with low tf-idf value
+    """
     corpus = corpora.MmCorpus(output_path + '/SerializedCorpus.mm')
     dictionary = corpora.Dictionary.load(output_path + "/dictionary")
     tfidf = gensim.models.TfidfModel.load(output_path + "/tfidf_model")
