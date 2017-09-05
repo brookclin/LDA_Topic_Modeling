@@ -25,7 +25,7 @@ if __name__ == "__main__":
     input_path = "sample/*.txt"
     # input_path = "../cp_extracted/*.txt"
     load_serialize(input_path, output_path)
-    filter_tfidf(input_path, output_path, 0.05)
+    # filter_tfidf(input_path, output_path, 0.05)
     LDAMODEL = ldamodel(input_path, output_path, num_topics)
     doc_topic_distribution(LDAMODEL, input_path, output_path)
     dist = LDAMODEL.show_topics(num_topics)

@@ -13,14 +13,17 @@ def load_serialize(input_path, output_path):
 
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = corpora.Dictionary(line for line in text_iter)
+    dictionary.filter_extremes()
+    dictionary.compactify()
     dictionary.save(output_path + "/dictionary")
 
     # convert tokenized documents into a document-term matrix
     corpus = MyCorpus(input_path, dictionary)
-    corpora.MmCorpus.serialize(output_path + '/SerializedCorpus.mm', corpus)
+    tfidf = models.TfidfModel(corpus)
+    # use tfidf-lized corpus instead of original one
+    corpora.MmCorpus.serialize(output_path + '/SerializedCorpus.mm', tfidf[corpus])
 
     # initialize a tfidf transformation
-    tfidf = models.TfidfModel(corpus)
     tfidf.save(output_path + "/tfidf_model")
 
 
@@ -30,6 +33,7 @@ def filter_tfidf(input_path, output_path, threshold=0.05):
     dictionary = corpora.Dictionary.load(output_path + "/dictionary")
 
     dictionary.filter_tokens(low_value_words)
+    dictionary.filter_extremes()
     dictionary.compactify()
     dictionary.save(output_path + "/new_dictionary")
     new_corpus = MyCorpus(input_path, dictionary)
