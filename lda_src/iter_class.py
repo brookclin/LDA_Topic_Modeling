@@ -43,7 +43,7 @@ def process_doc(doc):
     dict_en = enchant.Dict("en_US")
 
     # ticker list
-    f = open('lda_src/ticker.txt', 'r')
+    f = open('ticker.txt', 'r')
     ticker = [line.strip().lower() for line in f.readlines()]
     f.close()
 

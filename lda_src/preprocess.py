@@ -27,7 +27,6 @@ def load_serialize(input_path, output_path):
     tfidf.save(output_path + "/tfidf_model")
 
 
-
 def filter_tfidf(input_path, output_path, threshold=0.05):
     low_value_words = low_tfidf_terms(output_path, threshold)
     dictionary = corpora.Dictionary.load(output_path + "/dictionary")
