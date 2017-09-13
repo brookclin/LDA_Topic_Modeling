@@ -11,5 +11,5 @@ def ldamodel(output_path, num_tops=3):
     # generate LDA model
     # ldamodel = gensim.models.ldamodel.LdaModel(serialize_corpus, num_topics=num_tops, id2word=serialize_dict, passes=20)
     ldamodel = gensim.models.LdaMulticore(serialize_corpus, num_topics=num_tops, id2word=serialize_dict, passes=20, workers=3)
-
+    ldamodel.save(output_path + "/ldamodel")
     return ldamodel

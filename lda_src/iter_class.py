@@ -1,4 +1,4 @@
-import glob
+import os
 import re
 import enchant
 from gensim.utils import lemmatize
@@ -11,7 +11,7 @@ class IterDocs(object):
         self.fname = fname
 
     def __iter__(self):
-        for filename in glob.glob(self.fname):
+        for filename in os.listdir(self.fname):
             with open(filename, 'r') as ofile:
                 content = ofile.read()
                 yield process_doc(content)
@@ -23,7 +23,7 @@ class MyCorpus(object):
         self.dictionary = dictionary
 
     def __iter__(self):
-        for filename in glob.glob(self.fname):
+        for filename in os.listdir(self.fname):
             with open(filename, 'r') as ofile:
                 content = ofile.read()
                 yield self.dictionary.doc2bow(content.lower().split())

@@ -1,7 +1,6 @@
 from wordcloud import WordCloud
 from gensim import corpora
 import pandas as pd
-import glob
 import gensim
 import os
 
@@ -43,7 +42,7 @@ def doc_topic_distribution(ldamodel, input_path, output_path):
     new_corpus = corpora.MmCorpus(output_path + '/SerializedCorpus.mm')
 
     # column of file names for csv
-    fnames = [filename.split('/')[-1] for filename in glob.glob(input_path)]
+    fnames = [filename.split('/')[-1] for filename in os.listdir(input_path)]
 
     # doc-topics distribution to csv
     doc_topics_weights = []
@@ -67,7 +66,7 @@ def corpus_words_output(input_path, output_path):
     if not os.path.exists(csv_dir):
         os.makedirs(csv_dir)
     # column of file names for csv
-    fnames = [filename.split('/')[-1] for filename in glob.glob(input_path)]
+    fnames = [filename.split('/')[-1] for filename in os.listdir(input_path)]
 
     idx = 0
     for bow in corpus:

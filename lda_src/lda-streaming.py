@@ -13,7 +13,7 @@ from preprocess import load_serialize, filter_tfidf
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 logging.root.level = logging.INFO # ipython sometimes messes up the logging setup; restore
 
-# os.chdir("C:/Users/John/Desktop/LDA-chunlin")
+# os.chdir("C:/Users/John/Desktop/LDA-chunlin/lda_src")
 cur_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 output_path = '../experiment/' + cur_time
 if not os.path.exists(output_path):
@@ -23,7 +23,7 @@ if not os.path.exists(output_path):
 if __name__ == "__main__":
     num_topics = 3  # 100
     input_path = "../sample/*.txt"
-    # input_path = "../cp_extracted/*.txt"
+    # input_path = "../../cp_extracted"
     load_serialize(input_path, output_path)
     # filter_tfidf(input_path, output_path, 0.05)
     LDAMODEL = ldamodel(output_path, num_topics)
