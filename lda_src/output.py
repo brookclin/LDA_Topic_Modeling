@@ -88,7 +88,7 @@ def corpus_words_output(input_path, output_path):
         # bow = map(lambda (id, value): (dictionary[id], value), tfidf[bow])
         # df = pd.DataFrame.from_records(bow, columns=['word', 'tfidf'])
         # df = df.sort_values(by='tfidf')
-        # df.to_csv(csv_dir + "/" + fnames[idx] + ".csv")
+        # df.to_csv(os.path.join(csv_dir, fnames[idx] + ".csv"))
         # idx += 1
 
     result_list = []

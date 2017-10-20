@@ -40,11 +40,17 @@ def process_doc(doc):
     # lemmtizer
     # lmtzr = WordNetLemmatizer()
 
-    dict_en = enchant.Dict("en_US")
+    # dict_en = enchant.Dict("en_US")
+    # dict_en = enchant.DictWithPWL("en_US", "inv_token.txt")
 
     # ticker list
-    f = open('ticker.txt', 'r')
-    ticker = [line.strip().lower() for line in f.readlines()]
+    # f = open('ticker.txt', 'r')
+    # ticker = [line.strip().lower() for line in f.readlines()]
+    # f.close()
+
+    # investor dictionary
+    f = open("inv_token.txt", "r")
+    inv_dict = [line.strip().lower() for line in f.readlines()]
     f.close()
 
     raw = doc.decode('utf-8').lower()
@@ -60,6 +66,7 @@ def process_doc(doc):
     #                                         allowed_tags=re.compile('(NN)'),
     #                                         min_length=3)]
 
-    words_tokens = [word for word in stemmed_tokens if word not in ticker]
+    words_tokens = [word for word in stemmed_tokens if word in inv_dict]
+    # words_tokens = [word for word in stemmed_tokens if word not in ticker]
     # words_tokens = [word for word in stemmed_tokens if dict_en.check(word)]
     return words_tokens
